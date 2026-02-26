@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — AFTERIMAGE</title>
+  <meta name="description" content="AFTERIMAGE is a technology-driven perfume brand producing fine fragrances that blend conceptual art practice with scientific rigor.">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ─── ABOUT-SPECIFIC ─── */
+
+    .about-hero {
+      padding-top: clamp(4rem, 8vw, 6rem);
+      padding-bottom: clamp(3rem, 6vw, 4rem);
+    }
+
+    .about-hero .section-inner {
+      max-width: 720px;
+    }
+
+    .about-hero h1 {
+      margin-bottom: 2rem;
+    }
+
+    .about-hero .body-text {
+      max-width: 600px;
+    }
+
+    /* ─── TWO-COL ─── */
+
+    .about-section .section-inner {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: clamp(2rem, 4vw, 4rem);
+      align-items: start;
+      max-width: 860px;
+    }
+
+    .about-section-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--grey-mid);
+      padding-top: 0.15rem;
+    }
+
+    /* ─── CONCEPT ─── */
+
+    .section-inner.concept-grid {
+      grid-template-columns: 5fr 7fr;
+      align-items: stretch;
+    }
+
+    .concept-image {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .concept-image img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .concept-text h2 {
+      margin-bottom: 1.2rem;
+    }
+
+    .about-section-body h2 {
+      margin-bottom: 1.2rem;
+    }
+
+    /* ─── FOUNDER ─── */
+
+    .founder-grid {
+      display: grid;
+      grid-template-columns: 5fr 7fr;
+      gap: clamp(2rem, 4vw, 4rem);
+      align-items: start;
+    }
+
+    .founder-portrait img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .founder-portrait-credit {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.08em;
+      color: var(--grey);
+      text-transform: uppercase;
+      margin-top: 0.6rem;
+    }
+
+    .founder-bio h2 {
+      margin-bottom: 1.2rem;
+    }
+
+    .founder-cv {
+      margin-top: 2.5rem;
+    }
+
+    .founder-cv-item {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 1rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--grey-rule);
+      align-items: baseline;
+    }
+
+    .founder-cv-item:first-child {
+      border-top: 1px solid var(--grey-rule);
+    }
+
+    .founder-cv-year {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+      color: var(--grey-mid);
+    }
+
+    .founder-cv-desc {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--grey-dark);
+    }
+
+    .founder-cv-desc em {
+      font-style: italic;
+    }
+
+    /* ─── VALUES ─── */
+
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--grey-rule);
+      border: 1px solid var(--grey-rule);
+    }
+
+    .value-cell {
+      background: var(--cream);
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+    }
+
+    .value-cell h3 {
+      font-family: 'Kalice', serif;
+      font-weight: 400;
+      font-size: 1.05rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .value-cell p {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--grey-dark);
+    }
+
+    .value-cell-index {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+      color: var(--grey);
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    /* ─── IMAGE BAND ─── */
+
+    .image-band {
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .image-band img {
+      width: 100%;
+      height: 55vh;
+      min-height: 320px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .image-band-meta {
+      position: absolute;
+      bottom: 1.2rem;
+      right: clamp(1.5rem, 3vw, 3rem);
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+    }
+
+    /* ─── STUDIO CONTEXT ─── */
+
+    .studio-data {
+      margin-top: 2rem;
+    }
+
+    /* ─── RESPONSIVE ─── */
+
+    @media (max-width: 768px) {
+      .about-section .section-inner {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .about-section-label {
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--grey-rule);
+      }
+
+      .concept-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .concept-image {
+        max-width: 280px;
+      }
+
+      .founder-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .founder-portrait {
+        max-width: 320px;
+      }
+
+      .values-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="index.html">
+      <img src="assets/images/web/logo-black.svg" alt="AFTERIMAGE" class="nav-logo">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Index</a></li>
+      <li><a href="about.html" class="active">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <div class="page-body">
+
+    <!-- HERO -->
+    <section class="about-hero">
+      <div class="section-inner">
+        <div class="section-label">
+          <span>About</span>
+        </div>
+        <h1 class="reveal">AFTERIMAGE</h1>
+        <p class="body-text reveal reveal-delay-1">A technology-driven perfume brand producing fine fragrances that blend conceptual art practice with scientific rigor. Each scent is composed as a precise olfactive translation of color, light, and material.</p>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- CONCEPT -->
+    <section class="about-section">
+      <div class="section-inner concept-grid">
+        <div class="concept-image reveal">
+          <img src="assets/images/web/30ml-bottle.jpg" alt="AFTERIMAGE 30 ml bottle">
+        </div>
+        <div class="concept-text reveal reveal-delay-1">
+          <h2>The afterimage</h2>
+          <p class="body-text">An afterimage is a sensorial and perceptual trace — the lingering image on the eye after exposure to light, a memory, an impression.</p>
+          <p class="body-text">The term points at the tendency for complex and precise systems to produce surprising, magical results — emergent phenomena — mirroring the way an informationally-rich formula can result in a singular impression, an abstract olfactive experience.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- IMAGE BAND -->
+    <section class="image-band">
+      <img src="assets/images/web/cloud-of-petals-close.jpg" alt="Cloud of Petals — close-up at Bell Labs">
+      <span class="image-band-meta">Cloud of Petals — Detail, 2017</span>
+    </section>
+
+    <!-- FOUNDER -->
+    <section class="about-section">
+      <div class="section-inner">
+        <span class="about-section-label">Founder</span>
+        <div class="about-section-body">
+          <div class="founder-grid">
+            <div class="founder-portrait reveal">
+              <img src="assets/images/web/sarah-portrait.jpg" alt="Sarah Meyohas">
+              <span class="founder-portrait-credit">Photo: W Magazine</span>
+            </div>
+            <div class="founder-bio reveal reveal-delay-1">
+              <h2>Sarah Meyohas</h2>
+              <p class="body-text">Conceptual artist, technologist, and founder of Studio Meyohas. Her work has been collected and exhibited at the Centre Pompidou, the ICA London, and the New Museum.</p>
+              <p class="body-text">AFTERIMAGE emerges from a decade of investigations into material systems, perception, and form — from 100,000 rose petals photographed at Bell Labs to holographic sculpture and cast glass.</p>
+              <p class="body-text"><a href="https://sarahmeyohas.com" target="_blank" rel="noopener" style="color: var(--black); border-bottom: 1px solid var(--grey-rule); text-decoration: none; transition: border-color 0.2s ease;">sarahmeyohas.com</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="index.html">Index</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="https://instagram.com/afterimage.nyc" target="_blank" rel="noopener">Instagram</a>
+      </div>
+      <span class="footer-copy">&copy; 2026 AFTERIMAGE by Studio Meyohas</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      const els = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      els.forEach(el => observer.observe(el));
+    })();
+  </script>
+
+</body>
+</html>

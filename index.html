@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AFTERIMAGE</title>
+  <meta name="description" content="A technology-driven fragrance house by Studio Meyohas. Launching October 2026.">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ─── INDEX-SPECIFIC ─── */
+
+    .hero {
+      min-height: calc(100vh - 52px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+      position: relative;
+    }
+
+    .hero-logo {
+      width: min(65vw, 520px);
+      height: auto;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 1.6s ease 0.2s forwards;
+    }
+
+    .hero-meta {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      color: var(--grey-dark);
+      opacity: 0;
+      animation: fadeIn 1.6s ease 1.2s forwards;
+      text-align: center;
+      line-height: 2;
+    }
+
+    /* ─── INTRO ─── */
+
+    .intro .section-inner {
+      max-width: 640px;
+    }
+
+    .intro-text {
+      font-size: clamp(1.05rem, 1.8vw, 1.15rem);
+      line-height: 1.7;
+      color: var(--black);
+      text-align: center;
+    }
+
+    .intro-text + .intro-text {
+      margin-top: 1.6em;
+    }
+
+    /* ─── IMAGE BAND ─── */
+
+    .image-band {
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .image-band img {
+      width: 100%;
+      height: 65vh;
+      min-height: 360px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .image-band-caption {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.06em;
+      color: var(--grey-dark);
+      padding: 0.9rem clamp(1.5rem, 4vw, 4rem);
+      border-bottom: 1px solid var(--grey-rule);
+    }
+
+    /* ─── FRAGRANCES ─── */
+
+    .fragrances .section-inner {
+      max-width: 1080px;
+    }
+
+    .fragrance-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--grey-rule);
+      border: 1px solid var(--grey-rule);
+    }
+
+    .fragrance-cell {
+      background: var(--cream);
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fragrance-cell-index {
+      font-family: var(--mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.1em;
+      color: var(--grey);
+      margin-bottom: 1.5rem;
+    }
+
+    .fragrance-cell-image {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .fragrance-cell-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(0.15);
+      transition: filter 0.5s ease;
+    }
+
+    .fragrance-cell:hover .fragrance-cell-image img {
+      filter: grayscale(0);
+    }
+
+    .fragrance-cell h3 {
+      font-family: 'Kalice', serif;
+      font-weight: 400;
+      font-size: clamp(1.3rem, 2.2vw, 1.6rem);
+      margin-bottom: 0.5rem;
+    }
+
+    .fragrance-cell-origin {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--grey-mid);
+      margin-bottom: 1.2rem;
+    }
+
+    .fragrance-cell-desc {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--grey-dark);
+      margin-top: auto;
+    }
+
+    .fragrance-palette {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 1.2rem;
+    }
+
+    .fragrance-palette span {
+      width: 100%;
+      height: 10px;
+    }
+
+    /* ─── PRODUCT ─── */
+
+    .product .section-inner {
+      display: grid;
+      grid-template-columns: 5fr 6fr;
+      gap: clamp(3rem, 6vw, 5rem);
+      align-items: start;
+    }
+
+    .product-image img {
+      width: 100%;
+      height: auto;
+    }
+
+    .product-meta {
+      margin-top: 1rem;
+    }
+
+    .product-text h2 {
+      margin-bottom: 1.5rem;
+    }
+
+    /* ─── EDITIONS ─── */
+
+    .editions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--grey-rule);
+      border: 1px solid var(--grey-rule);
+      margin-top: 3rem;
+    }
+
+    .edition-cell {
+      background: var(--cream);
+      padding: 1.5rem;
+    }
+
+    .edition-cell-label {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--grey-mid);
+      margin-bottom: 0.8rem;
+    }
+
+    .edition-cell h4 {
+      font-family: 'Kalice', serif;
+      font-weight: 400;
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .edition-cell-spec {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.06em;
+      color: var(--grey-mid);
+    }
+
+    /* ─── SIGNUP ─── */
+
+    .signup {
+      text-align: center;
+      padding-top: clamp(5rem, 12vw, 9rem);
+      padding-bottom: clamp(5rem, 12vw, 9rem);
+    }
+
+    .signup .section-inner {
+      max-width: 440px;
+    }
+
+    .signup-logo {
+      width: min(44vw, 280px);
+      margin-bottom: 2rem;
+    }
+
+    .signup-date {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--grey-mid);
+      margin-bottom: 2.5rem;
+    }
+
+    .signup-form {
+      display: flex;
+      align-items: flex-end;
+      gap: 1rem;
+      max-width: 380px;
+      margin: 0 auto;
+    }
+
+    .signup-form .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .signup-confirmation {
+      display: none;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--grey-dark);
+      margin-top: 1.5rem;
+    }
+
+    .signup-confirmation.show {
+      display: block;
+      opacity: 0;
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    /* ─── RESPONSIVE ─── */
+
+    @media (max-width: 768px) {
+      .fragrance-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .product .section-inner {
+        grid-template-columns: 1fr;
+      }
+
+      .product-image {
+        max-width: 360px;
+      }
+
+      .editions-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .signup-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .signup-form .form-submit {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="index.html">
+      <img src="assets/images/web/logo-black.svg" alt="AFTERIMAGE" class="nav-logo">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Index</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <div class="page-body">
+
+    <!-- HERO -->
+    <section class="hero">
+      <img src="assets/images/web/logo-lockup-black.png" alt="AFTERIMAGE by Studio Meyohas" class="hero-logo">
+      <span class="hero-meta">Coming Late 2026<br>Est. 2026 &ensp;/&ensp; New York</span>
+    </section>
+
+    <hr class="rule">
+
+    <!-- INTRO -->
+    <section class="intro">
+      <div class="section-inner">
+        <p class="intro-text reveal">AFTERIMAGE is a perfume brand that distills the interplay of light, pattern, and materiality into scent.</p>
+      </div>
+    </section>
+
+    <!-- IMAGE BAND -->
+    <section class="image-band">
+      <img src="assets/images/web/cloud-of-petals-wide.jpg" alt="Cloud of Petals, 2017 — Bell Labs, New Jersey">
+      <p class="image-band-caption">Cloud of Petals, 2017 &mdash; Sixteen workers photographing 100,000 rose petals at the former Bell Labs, New Jersey</p>
+    </section>
+
+    <!-- FRAGRANCES -->
+    <section class="fragrances">
+      <div class="section-inner">
+        <div class="fragrance-grid">
+          <div class="fragrance-cell reveal">
+            <span class="fragrance-cell-index">01</span>
+            <div class="fragrance-cell-image">
+              <img src="assets/images/web/cloud-of-petals-installation.jpg" alt="Cloud of Petals">
+            </div>
+            <h3>100,000</h3>
+            <span class="fragrance-cell-origin">From Cloud of Petals</span>
+            <div class="fragrance-palette">
+              <span style="background:#8B878E"></span>
+              <span style="background:#F1B3E9"></span>
+              <span style="background:#FF952C"></span>
+              <span style="background:#DD685F"></span>
+              <span style="background:#ADF24E"></span>
+              <span style="background:#C60900"></span>
+            </div>
+            <p class="fragrance-cell-desc">100,000 rose petals photographed at Bell Labs. The compression of data into an ideal form. A hero floral built from a single material.</p>
+          </div>
+          <div class="fragrance-cell reveal reveal-delay-1">
+            <span class="fragrance-cell-index">02</span>
+            <div class="fragrance-cell-image">
+              <img src="assets/images/web/medusa-still.jpg" alt="Medusa">
+            </div>
+            <h3>Medusa</h3>
+            <span class="fragrance-cell-origin">From Medusa</span>
+            <div class="fragrance-palette">
+              <span style="background:#7F9AB2"></span>
+              <span style="background:#00334C"></span>
+              <span style="background:#405145"></span>
+              <span style="background:#351C06"></span>
+              <span style="background:#EFE8E1"></span>
+              <span style="background:#660027"></span>
+            </div>
+            <p class="fragrance-cell-desc">Labdanum-forward. Erotic, seductive, dangerous. The sting of a jellyfish in the south of France.</p>
+          </div>
+          <div class="fragrance-cell reveal reveal-delay-2">
+            <span class="fragrance-cell-index">03</span>
+            <div class="fragrance-cell-image">
+              <img src="assets/images/web/DSC_1922.jpg" alt="Truth Arrives in Slanted Beams">
+            </div>
+            <h3>Solar</h3>
+            <span class="fragrance-cell-origin">From Truth Arrives in Slanted Beams</span>
+            <div class="fragrance-palette">
+              <span style="background:#FFFF00"></span>
+              <span style="background:#EFC48F"></span>
+              <span style="background:#C1D8EA"></span>
+              <span style="background:#C8C8C8"></span>
+              <span style="background:#1E0F03"></span>
+              <span style="background:#EFE0CA"></span>
+            </div>
+            <p class="fragrance-cell-desc">An abstract desert solar led by hexyl salicylate, backgrounded by cool blue sky and cold minerality.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCT -->
+    <section class="product">
+      <div class="section-inner">
+        <div class="product-image reveal">
+          <img src="assets/images/web/artist-edition-bottle.jpg" alt="AFTERIMAGE bottle">
+          <div class="product-meta">
+            <div class="data-row">
+              <span class="data-key">Material</span>
+              <span class="data-val">Cast ripple glass</span>
+            </div>
+            <div class="data-row">
+              <span class="data-key">Closure</span>
+              <span class="data-val">Screw-neck, refillable</span>
+            </div>
+          </div>
+        </div>
+        <div class="product-text reveal reveal-delay-1">
+          <h2>The molecule as medium</h2>
+          <p class="body-text">AFTERIMAGE elevates the individual fragrance molecule as both pigment and pixel in the art of perfumery. Each formula precisely composed, each ingredient traceable and named.</p>
+          <p class="body-text">The ripple pattern on the bottle appears as an afterimage — a point of focus that propagates outward.</p>
+          <div class="editions-grid">
+            <div class="edition-cell">
+              <span class="edition-cell-label">Eau de Parfum</span>
+              <h4>75 ml</h4>
+            </div>
+            <div class="edition-cell">
+              <span class="edition-cell-label">Eau de Parfum</span>
+              <h4>30 ml</h4>
+            </div>
+            <div class="edition-cell">
+              <span class="edition-cell-label">Discovery Set</span>
+              <h4>3 &times; 2 ml</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="rule">
+
+    <!-- SIGNUP -->
+    <section class="signup">
+      <div class="section-inner">
+        <img src="assets/images/web/logo-black.svg" alt="AFTERIMAGE" class="signup-logo">
+        <p class="signup-date">Late 2026</p>
+        <form class="signup-form" id="signup-form">
+          <div class="form-group">
+            <label class="form-label" for="signup-email">Email</label>
+            <input type="email" id="signup-email" class="form-input" placeholder="you@example.com" required>
+          </div>
+          <button type="submit" class="form-submit">Notify</button>
+        </form>
+        <p class="signup-confirmation" id="signup-confirmation">Confirmed &mdash; we'll be in touch.</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="index.html">Index</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="https://instagram.com/afterimage.nyc" target="_blank" rel="noopener">Instagram</a>
+      </div>
+      <span class="footer-copy">&copy; 2026 AFTERIMAGE by Studio Meyohas</span>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    (function () {
+      const els = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12 });
+      els.forEach(el => observer.observe(el));
+    })();
+
+    // Signup form
+    document.getElementById('signup-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      this.style.display = 'none';
+      document.getElementById('signup-confirmation').classList.add('show');
+    });
+  </script>
+
+</body>
+</html>
