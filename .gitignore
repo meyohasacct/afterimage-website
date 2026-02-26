@@ -1,0 +1,12 @@
+.DS_Store
+assets/images/*.tif
+assets/images/*.jpeg
+assets/images/*.jpg
+assets/images/*.png
+assets/images/*.ai
+assets/logotype/
+assets/fonts/Kalice Medium/
+assets/fonts/Kalice Regular/
+assets/fonts/Kalice Regular Italic/
+assets/fonts/Nue Haas/
+assets/fonts/.DS_Store
