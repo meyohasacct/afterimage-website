@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AFTERIMAGE — Bottle Lighting Experiment</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a1a; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="three-canvas"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+// --- Renderer ---
+const threeCanvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x1a1a1a, 1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 2.5;
+renderer.localClippingEnabled = true;
+
+// --- Environment cubemap for glass reflections ---
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+const envMap = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+pmremGenerator.dispose();
+
+// --- Scene ---
+const scene = new THREE.Scene();
+
+// --- Camera ---
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 5);
+camera.lookAt(0, 0, 0);
+
+// --- Lighting: 10 point lights evenly distributed on a sphere ---
+const LIGHT_COUNT = 10;
+const warmHues = [0, 0.06, 0.12]; // red, orange, yellow
+const lights = [];
+for (let i = 0; i < LIGHT_COUNT; i++) {
+  const color = (i % 2 === 0)
+    ? new THREE.Color(0xffffff)
+    : new THREE.Color().setHSL(warmHues[Math.floor(i / 2) % warmHues.length], 0.5, 0.5);
+  const light = new THREE.PointLight(color, 96, 0, 2);
+  lights.push(light);
+  scene.add(light);
+}
+const lightSphCoords = [];
+
+// --- Bottle group ---
+const bottleGroup = new THREE.Group();
+scene.add(bottleGroup);
+
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/libs/draco/');
+const gltfLoader = new GLTFLoader();
+gltfLoader.setDRACOLoader(dracoLoader);
+let modelsLoaded = 0;
+
+// --- Liquid clipping plane (clips everything ABOVE the fill level) ---
+const liquidClipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+
+// --- Ripple clipping: patches any material's clip shader with animated waves ---
+const rippleClipTime = { value: 0 };
+
+function patchRippleClip(material) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uRippleTime = rippleClipTime;
+
+    // Vertex: pass world position to fragment
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <clipping_planes_pars_vertex>',
+      `#include <clipping_planes_pars_vertex>
+       varying vec3 vWorldPos_rip;`
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <clipping_planes_vertex>',
+      `#include <clipping_planes_vertex>
+       vWorldPos_rip = (modelMatrix * vec4(transformed, 1.0)).xyz;`
+    );
+
+    // Fragment: add ripple offset to clip test
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <clipping_planes_pars_fragment>',
+      `#include <clipping_planes_pars_fragment>
+       uniform float uRippleTime;
+       varying vec3 vWorldPos_rip;`
+    );
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <clipping_planes_fragment>',
+      `#if NUM_CLIPPING_PLANES > 0
+         vec4 plane;
+         float rip = sin(vWorldPos_rip.x * 12.0 + uRippleTime * 2.5) * 0.003
+                   + sin(vWorldPos_rip.z * 10.0 - uRippleTime * 1.8) * 0.0025
+                   + sin((vWorldPos_rip.x + vWorldPos_rip.z) * 7.0 + uRippleTime * 3.2) * 0.0015
+                   + sin(vWorldPos_rip.x * 18.0 - uRippleTime * 4.0) * 0.001;
+         #pragma unroll_loop_start
+         for ( int i = 0; i < UNION_CLIPPING_PLANES; i ++ ) {
+           plane = clippingPlanes[ i ];
+           if ( dot( vClipPosition, plane.xyz ) > plane.w + rip ) discard;
+         }
+         #pragma unroll_loop_end
+       #endif`
+    );
+  };
+  material.needsUpdate = true;
+}
+
+// --- Materials ---
+const glassMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color(0x111111),
+  metalness: 0.0, roughness: 0.05,
+  envMap, envMapIntensity: 2.5,
+  clearcoat: 1.0, clearcoatRoughness: 0.0,
+  ior: 1.5, reflectivity: 1.0,
+  transparent: true, opacity: 0.30,
+  side: THREE.DoubleSide, depthWrite: false,
+});
+
+const liquidMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color(0xdaa860),
+  metalness: 0.0,
+  roughness: 0.2,
+  envMap,
+  envMapIntensity: 1.5,
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.0,
+  ior: 1.33,
+  transparent: true,
+  opacity: 0.17,
+  side: THREE.DoubleSide,
+  clippingPlanes: [liquidClipPlane],
+  clipShadows: true,
+});
+patchRippleClip(liquidMaterial);
+
+
+// --- Load models ---
+gltfLoader.load('../bottle-body.glb', (gltf) => {
+  gltf.scene.traverse((c) => { if (c.isMesh) { c.material = glassMaterial; c.renderOrder = 2; } });
+  bottleGroup.add(gltf.scene);
+  modelsLoaded++;
+  if (modelsLoaded === 3) onModelsReady();
+});
+
+let voidMeshRef = null;
+let surfaceCap = null;
+let stencilGroup = null;
+
+// Stencil-based cap: renders the cross-section of the void mesh at the clip plane
+function createPlaneStencilGroup(geometry, plane, renderOrder) {
+  const group = new THREE.Group();
+  const baseMat = new THREE.MeshBasicMaterial();
+  baseMat.depthWrite = false;
+  baseMat.depthTest = false;
+  baseMat.colorWrite = false;
+  baseMat.stencilWrite = true;
+  baseMat.stencilFunc = THREE.AlwaysStencilFunc;
+
+  // Back faces — increment stencil
+  const mat0 = baseMat.clone();
+  mat0.side = THREE.BackSide;
+  mat0.clippingPlanes = [plane];
+  mat0.stencilFail = THREE.IncrementWrapStencilOp;
+  mat0.stencilZFail = THREE.IncrementWrapStencilOp;
+  mat0.stencilZPass = THREE.IncrementWrapStencilOp;
+
+  // Front faces — decrement stencil
+  const mat1 = baseMat.clone();
+  mat1.side = THREE.FrontSide;
+  mat1.clippingPlanes = [plane];
+  mat1.stencilFail = THREE.DecrementWrapStencilOp;
+  mat1.stencilZFail = THREE.DecrementWrapStencilOp;
+  mat1.stencilZPass = THREE.DecrementWrapStencilOp;
+
+  patchRippleClip(mat0);
+  patchRippleClip(mat1);
+
+  const mesh0 = new THREE.Mesh(geometry, mat0);
+  mesh0.renderOrder = renderOrder;
+  group.add(mesh0);
+
+  const mesh1 = new THREE.Mesh(geometry, mat1);
+  mesh1.renderOrder = renderOrder;
+  group.add(mesh1);
+
+  return group;
+}
+
+// Cap material — only draws where stencil is non-zero (the cross-section)
+const surfaceCapMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color(0xdaa860),
+  metalness: 0.0,
+  roughness: 0.02,
+  envMap,
+  envMapIntensity: 3.0,
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.0,
+  transparent: true,
+  opacity: 0.45,
+  side: THREE.DoubleSide,
+  stencilWrite: true,
+  stencilRef: 0,
+  stencilFunc: THREE.NotEqualStencilFunc,
+  stencilFail: THREE.ReplaceStencilOp,
+  stencilZFail: THREE.ReplaceStencilOp,
+  stencilZPass: THREE.ReplaceStencilOp,
+});
+gltfLoader.load('../../assets/bottle/Void.gltf', (gltf) => {
+  gltf.scene.traverse((c) => {
+    if (c.isMesh) {
+      voidMeshRef = c;
+      // Use the void mesh AS the liquid — apply liquid material with clipping
+      c.material = liquidMaterial;
+      c.renderOrder = 1;
+      c.visible = true;
+    }
+  });
+  bottleGroup.add(gltf.scene);
+  modelsLoaded++;
+  if (modelsLoaded === 3) onModelsReady();
+});
+
+gltfLoader.load('../bottle-pump.glb', (gltf) => {
+  gltf.scene.traverse((c) => {
+    if (c.isMesh) {
+      c.material = new THREE.MeshStandardMaterial({ color: 0x8a0600, metalness: 0.8, roughness: 0.15 });
+      c.renderOrder = 0;
+    }
+  });
+  bottleGroup.add(gltf.scene);
+  modelsLoaded++;
+  if (modelsLoaded === 3) onModelsReady();
+});
+
+function onModelsReady() {
+  const box = new THREE.Box3().setFromObject(bottleGroup);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+
+  const pivot = new THREE.Group();
+  while (bottleGroup.children.length) pivot.add(bottleGroup.children[0]);
+  pivot.position.sub(center);
+  bottleGroup.add(pivot);
+
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = 1.12 / maxDim;
+  bottleGroup.scale.setScalar(scale);
+
+  const scaledWidth = size.x * scale;
+  const lightRadius = scaledWidth * 5;
+  for (let i = 0; i < LIGHT_COUNT; i++) {
+    const phi = Math.acos(1 - (2 * (i + 0.5)) / LIGHT_COUNT);
+    const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+    lightSphCoords.push({ phi, theta, radius: lightRadius });
+    lights[i].position.set(
+      lightRadius * Math.sin(phi) * Math.cos(theta),
+      lightRadius * Math.cos(phi),
+      lightRadius * Math.sin(phi) * Math.sin(theta)
+    );
+  }
+
+  // Liquid fill: stencil-based cap at clip plane cross-section
+  if (voidMeshRef) {
+    voidMeshRef.geometry.computeBoundingBox();
+
+    // Stencil group: renders void geometry with stencil ops to mark cross-section
+    stencilGroup = createPlaneStencilGroup(voidMeshRef.geometry, liquidClipPlane, 0);
+    voidMeshRef.parent.add(stencilGroup);
+
+    // Large plane that only renders where stencil != 0 (the actual cross-section)
+    const capGeo = new THREE.PlaneGeometry(4, 4);
+    surfaceCap = new THREE.Mesh(capGeo, surfaceCapMaterial);
+    surfaceCap.onAfterRender = function (renderer) {
+      renderer.clearStencil();
+    };
+    surfaceCap.renderOrder = 0.1;
+    scene.add(surfaceCap);
+  }
+
+  bottleGroup.visible = true;
+  requestAnimationFrame(animate);
+}
+
+// --- Handle resize ---
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --- Animation loop ---
+const LIGHT_ROT_SPEED = 0.3;
+let lightRotAngle = 0;
+let lastTime = performance.now();
+
+function animate(now) {
+  requestAnimationFrame(animate);
+
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+  lightRotAngle += LIGHT_ROT_SPEED * dt;
+
+  // Rotate lights
+  for (let i = 0; i < LIGHT_COUNT; i++) {
+    const { phi, theta, radius } = lightSphCoords[i];
+    const rotatedTheta = theta + lightRotAngle;
+    lights[i].position.set(
+      radius * Math.sin(phi) * Math.cos(rotatedTheta),
+      radius * Math.cos(phi),
+      radius * Math.sin(phi) * Math.sin(rotatedTheta)
+    );
+  }
+
+  // Rotate bottle (Y + vertical Z)
+  bottleGroup.rotation.y += 0.004;
+  bottleGroup.rotation.z += 0.004;
+
+  // Gravity-aware clip plane: always horizontal, liquid pools at bottom
+  if (voidMeshRef) {
+    bottleGroup.updateMatrixWorld(true);
+    const worldBox = new THREE.Box3().setFromObject(voidMeshRef);
+    const worldFillY = worldBox.min.y + (worldBox.max.y - worldBox.min.y) * 0.6;
+
+    // Slosh: liquid tilts back and forth like it has momentum
+    const t = now * 0.001;
+    const sloshX = Math.sin(t * 0.8) * 0.09 + Math.sin(t * 1.9) * 0.03;
+    const sloshZ = Math.cos(t * 1.1) * 0.09 + Math.cos(t * 2.3) * 0.03;
+    liquidClipPlane.normal.set(sloshX, -1, sloshZ).normalize();
+    liquidClipPlane.constant = worldFillY;
+    rippleClipTime.value = t;
+
+    // Position cap plane on the clip plane (from Three.js stencil example)
+    if (surfaceCap) {
+      liquidClipPlane.coplanarPoint(surfaceCap.position);
+      surfaceCap.lookAt(
+        surfaceCap.position.x - liquidClipPlane.normal.x,
+        surfaceCap.position.y - liquidClipPlane.normal.y,
+        surfaceCap.position.z - liquidClipPlane.normal.z
+      );
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+</script>
+</body>
+</html>

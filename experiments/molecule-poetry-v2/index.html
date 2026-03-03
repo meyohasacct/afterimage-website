@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en" class="loading">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AFTERIMAGE — Molecular Concrete Poetry</title>
+<style>
+  @font-face {
+    font-family: 'Kalice';
+    src: url('../../assets/fonts/Kalice-Regular-CurlyR.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Kalice';
+    src: url('../../assets/fonts/Kalice-Medium.woff2') format('woff2'),
+         url('../../assets/fonts/Kalice-Medium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 1100vh; overflow-x: hidden; background: #1a1a1a; }
+  @media (max-width: 768px) {
+    html, body { height: 600vh; }
+    #bottle-caption { font-size: clamp(24px, 2.8vw, 36px); }
+    #loader span { font-size: 28px; }
+    .grain { display: none; }
+  }
+  html.loading, html.loading body { height: 100vh; overflow: hidden; }
+  #loader {
+    position: fixed; inset: 0; z-index: 10;
+    background: #1a1a1a;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.6s ease;
+  }
+  #loader.done { opacity: 0; pointer-events: none; }
+  #loader span {
+    font: 400 14px Kalice, Georgia, serif;
+    color: rgba(200,200,200,0.8);
+    letter-spacing: 0.15em;
+  }
+  #loader span span {
+    display: inline-block;
+    animation: wave 1s ease-in-out infinite;
+  }
+  @keyframes wave {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
+  }
+  #c { display: block; position: fixed; top: 0; left: 0; }
+  #three-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    opacity: 0;
+  }
+  #bottle-caption {
+    position: fixed;
+    bottom: 12vh;
+    left: 0; right: 0;
+    text-align: center;
+    font: 400 clamp(12px, 1.4vw, 18px) Kalice, Georgia, serif;
+    color: rgba(200, 200, 200, 0.7);
+    letter-spacing: 0.2em;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 0;
+  }
+  #site-footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 36px;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 2;
+    transition: opacity 0.4s ease;
+  }
+  #site-footer a {
+    pointer-events: auto;
+    color: rgba(200, 200, 200, 0.7);
+    text-decoration: none;
+    font: 400 11px Kalice, Georgia, serif;
+    letter-spacing: 0.18em;
+    transition: color 0.2s ease;
+  }
+  #site-footer a:hover { color: rgba(255, 255, 255, 0.95); }
+  .footer-links { display: flex; gap: 28px; }
+  .footer-social { display: flex; gap: 20px; align-items: center; }
+  .footer-social a { display: flex; align-items: center; }
+  .footer-social svg { width: 16px; height: 16px; fill: rgba(200, 200, 200, 0.7); transition: fill 0.2s ease; }
+  .footer-social a:hover svg { fill: rgba(255, 255, 255, 0.95); }
+  .grain {
+    position: fixed;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0.08;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+    animation: grain 0.5s steps(1) infinite;
+  }
+  @keyframes grain {
+    0% { transform: translate(0, 0); }
+    20% { transform: translate(-10%, -10%); }
+    40% { transform: translate(5%, -15%); }
+    60% { transform: translate(-15%, 5%); }
+    80% { transform: translate(10%, 10%); }
+    100% { transform: translate(0, 0); }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="loader"><span><span style="animation-delay:0s">L</span><span style="animation-delay:0.08s">O</span><span style="animation-delay:0.16s">A</span><span style="animation-delay:0.24s">D</span><span style="animation-delay:0.32s">I</span><span style="animation-delay:0.4s">N</span><span style="animation-delay:0.48s">G</span></span></div>
+<canvas id="c"></canvas>
+<canvas id="three-canvas"></canvas>
+<div id="bottle-caption">COMING LATE 2026</div>
+<footer id="site-footer">
+  <div class="footer-links">
+    <a href="#">ABOUT</a>
+    <a href="#">CONTACT</a>
+  </div>
+  <div class="footer-social">
+    <!-- Instagram -->
+    <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.054 1.97.24 2.43.403a4.088 4.088 0 011.47.957c.453.453.774.898.957 1.47.163.46.349 1.26.404 2.43.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.055 1.17-.241 1.97-.404 2.43a4.088 4.088 0 01-.957 1.47 4.088 4.088 0 01-1.47.957c-.46.163-1.26.349-2.43.404-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.055-1.97-.241-2.43-.404a4.088 4.088 0 01-1.47-.957 4.088 4.088 0 01-.957-1.47c-.163-.46-.349-1.26-.404-2.43C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.055-1.17.241-1.97.404-2.43a4.088 4.088 0 01.957-1.47A4.088 4.088 0 015.064 2.293c.46-.163 1.26-.349 2.43-.404C8.76 1.831 9.14 1.819 12 1.819L12 2.163zM12 0C8.741 0 8.333.014 7.053.072 5.775.131 4.902.333 4.14.63a5.876 5.876 0 00-2.126 1.384A5.876 5.876 0 00.63 4.14C.333 4.902.131 5.775.072 7.053.014 8.333 0 8.741 0 12s.014 3.667.072 4.947c.059 1.278.261 2.151.558 2.913a5.876 5.876 0 001.384 2.126 5.876 5.876 0 002.126 1.384c.762.297 1.635.499 2.913.558C8.333 23.986 8.741 24 12 24s3.667-.014 4.947-.072c1.278-.059 2.151-.261 2.913-.558a5.876 5.876 0 002.126-1.384 5.876 5.876 0 001.384-2.126c.297-.762.499-1.635.558-2.913.058-1.28.072-1.688.072-4.947s-.014-3.667-.072-4.947c-.059-1.278-.261-2.151-.558-2.913a5.876 5.876 0 00-1.384-2.126A5.876 5.876 0 0019.86.63C19.098.333 18.225.131 16.947.072 15.667.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+    <!-- X / Twitter -->
+    <a href="#" aria-label="X"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+    <!-- TikTok -->
+    <a href="#" aria-label="TikTok"><svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48V13.2a8.16 8.16 0 005.58 2.2v-3.45a4.85 4.85 0 01-3.58-1.7V6.69h3.58z"/></svg></a>
+  </div>
+</footer>
+<div class="grain"></div>
+<script>
+// Prevent browser from restoring scroll position on reload/back-nav
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+
+// --- Simplex Noise ---
+const SimplexNoise = (() => {
+  const F2 = 0.5 * (Math.sqrt(3) - 1);
+  const G2 = (3 - Math.sqrt(3)) / 6;
+  const grad3 = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+  class Simplex {
+    constructor(seed = Math.random()) {
+      this.perm = new Uint8Array(512);
+      this.permMod8 = new Uint8Array(512);
+      const p = new Uint8Array(256);
+      for (let i = 0; i < 256; i++) p[i] = i;
+      let s = seed * 2147483647 | 0;
+      if (s <= 0) s += 2147483646;
+      for (let i = 255; i > 0; i--) {
+        s = (s * 16807) % 2147483647;
+        const j = s % (i + 1);
+        [p[i], p[j]] = [p[j], p[i]];
+      }
+      for (let i = 0; i < 512; i++) {
+        this.perm[i] = p[i & 255];
+        this.permMod8[i] = this.perm[i] % 8;
+      }
+    }
+    noise2D(xin, yin) {
+      const s = (xin + yin) * F2;
+      const i = Math.floor(xin + s);
+      const j = Math.floor(yin + s);
+      const t = (i + j) * G2;
+      const x0 = xin - (i - t), y0 = yin - (j - t);
+      const i1 = x0 > y0 ? 1 : 0, j1 = x0 > y0 ? 0 : 1;
+      const x1 = x0 - i1 + G2, y1 = y0 - j1 + G2;
+      const x2 = x0 - 1 + 2 * G2, y2 = y0 - 1 + 2 * G2;
+      const ii = i & 255, jj = j & 255;
+      let n0 = 0, n1 = 0, n2 = 0;
+      let t0 = 0.5 - x0 * x0 - y0 * y0;
+      if (t0 > 0) { t0 *= t0; const g = grad3[this.permMod8[ii + this.perm[jj]]]; n0 = t0 * t0 * (g[0] * x0 + g[1] * y0); }
+      let t1 = 0.5 - x1 * x1 - y1 * y1;
+      if (t1 > 0) { t1 *= t1; const g = grad3[this.permMod8[ii + i1 + this.perm[jj + j1]]]; n1 = t1 * t1 * (g[0] * x1 + g[1] * y1); }
+      let t2 = 0.5 - x2 * x2 - y2 * y2;
+      if (t2 > 0) { t2 *= t2; const g = grad3[this.permMod8[ii + 1 + this.perm[jj + 1]]]; n2 = t2 * t2 * (g[0] * x2 + g[1] * y2); }
+      return 70 * (n0 + n1 + n2);
+    }
+  }
+  return Simplex;
+})();
+
+// --- Setup ---
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const noise = new SimplexNoise(42);
+
+const WORD = 'AFTERIMAGE';
+const LETTER_COUNT = WORD.length;
+const FONT_SIZE_RATIO = window.innerWidth <= 768 ? 0.09 : 0.045;
+
+let W, H, fontSize;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  fontSize = Math.max(24, Math.min(W, H) * FONT_SIZE_RATIO);
+}
+resize();
+window.addEventListener('resize', resize);
+
+// --- 3D perspective ---
+const PERSPECTIVE = 800;
+
+function project(x3, y3, z3) {
+  const scale = PERSPECTIVE / (PERSPECTIVE + z3);
+  return {
+    x: W / 2 + x3 * scale,
+    y: H / 2 + y3 * scale,
+    scale,
+  };
+}
+
+function rotateY(x, y, z, angle) {
+  const c = Math.cos(angle), s = Math.sin(angle);
+  return { x: x * c + z * s, y, z: -x * s + z * c };
+}
+
+function rotateX(x, y, z, angle) {
+  const c = Math.cos(angle), s = Math.sin(angle);
+  return { x, y: y * c - z * s, z: y * s + z * c };
+}
+
+// --- Letters with 3D positions ---
+const letters = WORD.split('').map((ch, i) => ({
+  ch,
+  index: i,
+  x: (Math.random() - 0.5) * 400,
+  y: (Math.random() - 0.5) * 400,
+  z: (Math.random() - 0.5) * 400,
+  vx: 0, vy: 0, vz: 0,
+  tx: 0, ty: 0, tz: 0,
+}));
+
+// --- Formations ---
+function centeredWord() {
+  const spacing = fontSize * 0.75;
+  const totalW = spacing * (LETTER_COUNT - 1);
+  const startX = -totalW / 2;
+  return letters.map((_, i) => ({
+    x: startX + i * spacing,
+    y: 0,
+    z: 0,
+  }));
+}
+
+function dispersed() {
+  const spread = Math.min(W, H) * 0.45;
+  return letters.map(() => ({
+    x: (Math.random() - 0.5) * spread,
+    y: (Math.random() - 0.5) * spread,
+    z: (Math.random() - 0.5) * spread,
+  }));
+}
+
+const formations = [
+  { name: 'centeredWord', fn: centeredWord, bonds: 'chain' },
+  { name: 'dispersed', fn: dispersed, bonds: 'proximity' },
+];
+
+function getBonds(type) {
+  switch (type) {
+    case 'chain':
+      return Array.from({ length: LETTER_COUNT - 1 }, (_, i) => [i, i + 1]);
+    case 'proximity':
+    default:
+      return null;
+  }
+}
+
+// --- Scroll-driven state ---
+let scrollT = 0;
+window.bottleT = 0;
+let currentBondType = 'proximity';
+let staticBonds = null;
+
+let dispersedPositions = dispersed();
+let dispersedTimer = 0;
+const DISPERSED_HOLD = 1.5;
+const DISPERSED_SETTLE = 1.5;
+
+function reRandomize() {
+  dispersedPositions = dispersed();
+  dispersedTimer = 0;
+}
+
+function updateTargetsFromScroll() {
+  const aligned = centeredWord();
+
+  if (scrollT > 0.7) {
+    currentBondType = 'chain';
+    staticBonds = getBonds('chain');
+  } else {
+    currentBondType = 'proximity';
+    staticBonds = null;
+  }
+
+  letters.forEach((letter, i) => {
+    letter.tx = dispersedPositions[i].x + (aligned[i].x - dispersedPositions[i].x) * scrollT;
+    letter.ty = dispersedPositions[i].y + (aligned[i].y - dispersedPositions[i].y) * scrollT;
+    letter.tz = dispersedPositions[i].z + (aligned[i].z - dispersedPositions[i].z) * scrollT;
+  });
+}
+
+window.addEventListener('scroll', () => {
+  const H = window.innerHeight;
+  const isMobile = window.innerWidth <= 768;
+  const letterScrollRange = (isMobile ? 2.5 : 4) * H;
+  scrollT = Math.min(1, Math.max(0, window.scrollY / letterScrollRange));
+
+  const holdEnd = letterScrollRange + (isMobile ? 1 : 3) * H;
+  const totalMaxScroll = document.body.scrollHeight - H;
+  window.bottleT = Math.max(0, Math.min(1, (window.scrollY - holdEnd) / (totalMaxScroll - holdEnd)));
+});
+
+updateTargetsFromScroll();
+
+// --- Physics ---
+const SPRING_K = 1.3;
+const DAMPING = 0.83;
+const NOISE_SPEED = 0.4;
+const VIBRATION_AMP = 1.5;
+const BOND_DISTANCE_THRESHOLD_RATIO = 6;
+
+let rotYVal = 0;
+let rotXVal = 0;
+const ROT_Y_SPEED = 0.15;
+const ROT_X_SPEED = 0.06;
+
+let time = 0;
+let lastTime2D = performance.now();
+
+function animate(now) {
+  requestAnimationFrame(animate);
+
+  const dt = Math.min((now - lastTime2D) / 1000, 0.05);
+  lastTime2D = now;
+  time += dt;
+
+  if (scrollT < 0.1) {
+    dispersedTimer += dt;
+    if (dispersedTimer > DISPERSED_HOLD + DISPERSED_SETTLE) {
+      reRandomize();
+    }
+  } else {
+    dispersedTimer = 0;
+  }
+
+  updateTargetsFromScroll();
+
+  const rotAmount = 1 - scrollT * scrollT;
+  rotYVal += ROT_Y_SPEED * dt * rotAmount;
+  rotXVal = Math.sin(time * 0.2) * 0.25 * rotAmount;
+
+  for (const letter of letters) {
+    letter.vx += (letter.tx - letter.x) * SPRING_K * dt;
+    letter.vy += (letter.ty - letter.y) * SPRING_K * dt;
+    letter.vz += (letter.tz - letter.z) * SPRING_K * dt;
+    letter.vx *= DAMPING;
+    letter.vy *= DAMPING;
+    letter.vz *= DAMPING;
+    letter.x += letter.vx * dt * 60;
+    letter.y += letter.vy * dt * 60;
+    letter.z += letter.vz * dt * 60;
+  }
+
+  const bottleProgress = Math.min(1, (window.bottleT || 0) / 0.3);
+  const textTargetY = -(H / 2) + H * 0.12;
+  const textOffsetY = bottleProgress * textTargetY;
+
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(0, 0, W, H);
+
+  {
+    const fx = 1 - scrollT;
+
+    const projected = letters.map((letter, i) => {
+      const nx = noise.noise2D(i * 1.7, time * NOISE_SPEED) * VIBRATION_AMP * fx;
+      const ny = noise.noise2D(i * 1.7 + 100, time * NOISE_SPEED + 50) * VIBRATION_AMP * fx;
+
+      let p = rotateY(letter.x, letter.y, letter.z, rotYVal);
+      p = rotateX(p.x, p.y, p.z, rotXVal);
+
+      const proj = project(p.x, p.y, p.z);
+      const flatX = W / 2 + letter.x;
+      const flatY = H / 2 + letter.y;
+      const sx = proj.x * fx + flatX * scrollT;
+      const sy = proj.y * fx + flatY * scrollT;
+
+      return {
+        index: i,
+        ch: letter.ch,
+        screenX: sx + nx,
+        screenY: sy + ny + textOffsetY,
+        scale: proj.scale,
+        z: p.z,
+      };
+    });
+
+    const sorted = [...projected].sort((a, b) => b.z - a.z);
+
+    if (fx > 0.01) {
+      const bondThreshold = fontSize * BOND_DISTANCE_THRESHOLD_RATIO;
+      ctx.lineWidth = 1;
+
+      if (staticBonds) {
+        for (const [a, b] of staticBonds) {
+          const pa = projected[a];
+          const pb = projected[b];
+          const dist = Math.hypot(pb.screenX - pa.screenX, pb.screenY - pa.screenY);
+          const alpha = Math.max(0, 1 - dist / (bondThreshold * 1.2));
+          const minScale = Math.min(pa.scale, pb.scale);
+          const fog = Math.max(0, (minScale - 0.5) / 0.5);
+          ctx.strokeStyle = `rgba(200, 200, 200, ${alpha * 0.18 * fog * fog * fx})`;
+          ctx.beginPath();
+          ctx.moveTo(pa.screenX, pa.screenY);
+          ctx.lineTo(pb.screenX, pb.screenY);
+          ctx.stroke();
+        }
+      } else {
+        for (let i = 0; i < LETTER_COUNT; i++) {
+          for (let j = i + 1; j < LETTER_COUNT; j++) {
+            const pa = projected[i];
+            const pb = projected[j];
+            const dist = Math.hypot(pb.screenX - pa.screenX, pb.screenY - pa.screenY);
+            if (dist < bondThreshold) {
+              const alpha = 1 - dist / bondThreshold;
+              const minScale = Math.min(pa.scale, pb.scale);
+              const fog = Math.max(0, (minScale - 0.5) / 0.5);
+              ctx.strokeStyle = `rgba(200, 200, 200, ${alpha * 0.15 * fog * fog * fx})`;
+              ctx.beginPath();
+              ctx.moveTo(pa.screenX, pa.screenY);
+              ctx.lineTo(pb.screenX, pb.screenY);
+              ctx.stroke();
+            }
+          }
+        }
+      }
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    for (const p of sorted) {
+      const blendedScale = p.scale + (1 - p.scale) * scrollT;
+      const scaledSize = fontSize * blendedScale;
+      const fog = Math.max(0, (p.scale - 0.5) / 0.5);
+      const depthAlpha = 0.05 + 0.9 * fog * fog;
+      const alpha = depthAlpha + (1 - depthAlpha) * scrollT;
+      const blur = (1 - fog) * 3 * fx;
+
+      ctx.save();
+      ctx.filter = blur > 0.3 ? `blur(${blur}px)` : 'none';
+      ctx.font = `400 ${scaledSize}px Kalice, Georgia, serif`;
+      ctx.fillStyle = `rgba(200, 200, 200, ${alpha})`;
+      ctx.fillText(p.ch, p.screenX, p.screenY);
+      ctx.restore();
+    }
+
+    const bylineAlpha = Math.max(0, (scrollT - 0.9) / 0.1);
+    if (bylineAlpha > 0.01) {
+      const bylineSize = fontSize * 0.525;
+      ctx.font = `400 ${bylineSize}px Kalice, Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = `rgba(200, 200, 200, ${bylineAlpha})`;
+      const bylineX = W / 2 + bylineSize * 1.5;
+      const bylineY = H / 2 + fontSize * 0.75 + textOffsetY;
+      ctx.fillText('BY            STUDIO', bylineX, bylineY);
+      ctx.fillText('MEYOHAS', bylineX, bylineY + bylineSize * 1.15);
+    }
+  }
+}
+
+// --- Loading gate ---
+window.bottleLoaded = false;
+function checkReady() {
+  if (!window.bottleLoaded) {
+    requestAnimationFrame(checkReady);
+    return;
+  }
+  const loader = document.getElementById('loader');
+  loader.classList.add('done');
+  document.documentElement.classList.remove('loading');
+  setTimeout(() => loader.remove(), 700);
+  requestAnimationFrame(animate);
+}
+document.fonts.ready.then(() => {
+  checkReady();
+});
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+// --- Renderer (alpha: true for transparent overlay on 2D canvas) ---
+const threeCanvas = document.getElementById('three-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, alpha: true, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 2.5;
+renderer.localClippingEnabled = true;
+
+// --- Environment cubemap for glass reflections ---
+const pmremGenerator = new THREE.PMREMGenerator(renderer);
+const envMap = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+pmremGenerator.dispose();
+
+// --- Scene ---
+const scene = new THREE.Scene();
+
+// --- Camera ---
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 5);
+camera.lookAt(0, 0, 0);
+
+// --- Lighting: 10 point lights evenly distributed on a sphere ---
+const LIGHT_COUNT = 10;
+const warmHues = [0, 0.06, 0.12]; // red, orange, yellow
+const lights = [];
+for (let i = 0; i < LIGHT_COUNT; i++) {
+  const color = (i % 2 === 0)
+    ? new THREE.Color(0xffffff)
+    : new THREE.Color().setHSL(warmHues[Math.floor(i / 2) % warmHues.length], 0.5, 0.5);
+  const light = new THREE.PointLight(color, 96, 0, 2);
+  lights.push(light);
+  scene.add(light);
+}
+const lightSphCoords = [];
+
+// --- Bottle group ---
+const bottleGroup = new THREE.Group();
+scene.add(bottleGroup);
+
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/libs/draco/');
+const gltfLoader = new GLTFLoader();
+gltfLoader.setDRACOLoader(dracoLoader);
+let modelsLoaded = 0;
+let bottleReady = false;
+
+// --- Liquid clipping plane ---
+const liquidClipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+
+// --- Ripple clipping: patches any material's clip shader with animated waves ---
+const rippleClipTime = { value: 0 };
+
+function patchRippleClip(material) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uRippleTime = rippleClipTime;
+
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <clipping_planes_pars_vertex>',
+      `#include <clipping_planes_pars_vertex>
+       varying vec3 vWorldPos_rip;`
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <clipping_planes_vertex>',
+      `#include <clipping_planes_vertex>
+       vWorldPos_rip = (modelMatrix * vec4(transformed, 1.0)).xyz;`
+    );
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <clipping_planes_pars_fragment>',
+      `#include <clipping_planes_pars_fragment>
+       uniform float uRippleTime;
+       varying vec3 vWorldPos_rip;`
+    );
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <clipping_planes_fragment>',
+      `#if NUM_CLIPPING_PLANES > 0
+         vec4 plane;
+         float rip = sin(vWorldPos_rip.x * 12.0 + uRippleTime * 2.5) * 0.003
+                   + sin(vWorldPos_rip.z * 10.0 - uRippleTime * 1.8) * 0.0025
+                   + sin((vWorldPos_rip.x + vWorldPos_rip.z) * 7.0 + uRippleTime * 3.2) * 0.0015
+                   + sin(vWorldPos_rip.x * 18.0 - uRippleTime * 4.0) * 0.001;
+         #pragma unroll_loop_start
+         for ( int i = 0; i < UNION_CLIPPING_PLANES; i ++ ) {
+           plane = clippingPlanes[ i ];
+           if ( dot( vClipPosition, plane.xyz ) > plane.w + rip ) discard;
+         }
+         #pragma unroll_loop_end
+       #endif`
+    );
+  };
+  material.needsUpdate = true;
+}
+
+// --- Materials ---
+const glassMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color(0x111111),
+  metalness: 0.0, roughness: 0.05,
+  envMap, envMapIntensity: 2.5,
+  clearcoat: 1.0, clearcoatRoughness: 0.0,
+  ior: 1.5, reflectivity: 1.0,
+  transparent: true, opacity: 0.30,
+  side: THREE.DoubleSide, depthWrite: false,
+});
+
+const liquidMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color(0xdaa860),
+  metalness: 0.0,
+  roughness: 0.2,
+  envMap,
+  envMapIntensity: 1.5,
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.0,
+  ior: 1.33,
+  transparent: true,
+  opacity: 0.17,
+  side: THREE.DoubleSide,
+  clippingPlanes: [liquidClipPlane],
+  clipShadows: true,
+});
+patchRippleClip(liquidMaterial);
+
+// --- Stencil cap ---
+let voidMeshRef = null;
+let surfaceCap = null;
+let stencilGroup = null;
+
+function createPlaneStencilGroup(geometry, plane, renderOrder) {
+  const group = new THREE.Group();
+  const baseMat = new THREE.MeshBasicMaterial();
+  baseMat.depthWrite = false;
+  baseMat.depthTest = false;
+  baseMat.colorWrite = false;
+  baseMat.stencilWrite = true;
+  baseMat.stencilFunc = THREE.AlwaysStencilFunc;
+
+  const mat0 = baseMat.clone();
+  mat0.side = THREE.BackSide;
+  mat0.clippingPlanes = [plane];
+  mat0.stencilFail = THREE.IncrementWrapStencilOp;
+  mat0.stencilZFail = THREE.IncrementWrapStencilOp;
+  mat0.stencilZPass = THREE.IncrementWrapStencilOp;
+
+  const mat1 = baseMat.clone();
+  mat1.side = THREE.FrontSide;
+  mat1.clippingPlanes = [plane];
+  mat1.stencilFail = THREE.DecrementWrapStencilOp;
+  mat1.stencilZFail = THREE.DecrementWrapStencilOp;
+  mat1.stencilZPass = THREE.DecrementWrapStencilOp;
+
+  patchRippleClip(mat0);
+  patchRippleClip(mat1);
+
+  const mesh0 = new THREE.Mesh(geometry, mat0);
+  mesh0.renderOrder = renderOrder;
+  group.add(mesh0);
+
+  const mesh1 = new THREE.Mesh(geometry, mat1);
+  mesh1.renderOrder = renderOrder;
+  group.add(mesh1);
+
+  return group;
+}
+
+const surfaceCapMaterial = new THREE.MeshPhysicalMaterial({
+  color: new THREE.Color(0xdaa860),
+  metalness: 0.0,
+  roughness: 0.02,
+  envMap,
+  envMapIntensity: 3.0,
+  clearcoat: 1.0,
+  clearcoatRoughness: 0.0,
+  transparent: true,
+  opacity: 0.45,
+  side: THREE.DoubleSide,
+  stencilWrite: true,
+  stencilRef: 0,
+  stencilFunc: THREE.NotEqualStencilFunc,
+  stencilFail: THREE.ReplaceStencilOp,
+  stencilZFail: THREE.ReplaceStencilOp,
+  stencilZPass: THREE.ReplaceStencilOp,
+});
+
+// --- Load models ---
+gltfLoader.load('../bottle-body.glb', (gltf) => {
+  gltf.scene.traverse((c) => { if (c.isMesh) { c.material = glassMaterial; c.renderOrder = 2; } });
+  bottleGroup.add(gltf.scene);
+  modelsLoaded++;
+  if (modelsLoaded === 3) onModelsReady();
+});
+
+gltfLoader.load('../../assets/bottle/Void.gltf', (gltf) => {
+  gltf.scene.traverse((c) => {
+    if (c.isMesh) {
+      voidMeshRef = c;
+      c.material = liquidMaterial;
+      c.renderOrder = 1;
+      c.visible = true;
+    }
+  });
+  bottleGroup.add(gltf.scene);
+  modelsLoaded++;
+  if (modelsLoaded === 3) onModelsReady();
+});
+
+gltfLoader.load('../bottle-pump.glb', (gltf) => {
+  gltf.scene.traverse((c) => {
+    if (c.isMesh) {
+      c.material = new THREE.MeshStandardMaterial({ color: 0x8a0600, metalness: 0.8, roughness: 0.15 });
+      c.renderOrder = 0;
+    }
+  });
+  bottleGroup.add(gltf.scene);
+  modelsLoaded++;
+  if (modelsLoaded === 3) onModelsReady();
+});
+
+function onModelsReady() {
+  const box = new THREE.Box3().setFromObject(bottleGroup);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+
+  const pivot = new THREE.Group();
+  while (bottleGroup.children.length) pivot.add(bottleGroup.children[0]);
+  pivot.position.sub(center);
+  bottleGroup.add(pivot);
+
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const scale = 1.12 / maxDim;
+  bottleGroup.scale.setScalar(scale);
+
+  const scaledWidth = size.x * scale;
+  const lightRadius = scaledWidth * 5;
+  for (let i = 0; i < LIGHT_COUNT; i++) {
+    const phi = Math.acos(1 - (2 * (i + 0.5)) / LIGHT_COUNT);
+    const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+    lightSphCoords.push({ phi, theta, radius: lightRadius });
+    lights[i].position.set(
+      lightRadius * Math.sin(phi) * Math.cos(theta),
+      lightRadius * Math.cos(phi),
+      lightRadius * Math.sin(phi) * Math.sin(theta)
+    );
+  }
+
+  // Liquid fill: stencil-based cap at clip plane cross-section
+  if (voidMeshRef) {
+    voidMeshRef.geometry.computeBoundingBox();
+
+    stencilGroup = createPlaneStencilGroup(voidMeshRef.geometry, liquidClipPlane, 0);
+    voidMeshRef.parent.add(stencilGroup);
+
+    const capGeo = new THREE.PlaneGeometry(4, 4);
+    surfaceCap = new THREE.Mesh(capGeo, surfaceCapMaterial);
+    surfaceCap.onAfterRender = function (renderer) {
+      renderer.clearStencil();
+    };
+    surfaceCap.renderOrder = 0.1;
+    scene.add(surfaceCap);
+  }
+
+  // Warm-up renders
+  bottleGroup.visible = true;
+  renderer.render(scene, camera);
+  renderer.render(scene, camera);
+  bottleGroup.visible = false;
+
+  bottleReady = true;
+  window.bottleLoaded = true;
+}
+
+// --- Handle resize ---
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --- Animation loop ---
+const LIGHT_ROT_SPEED = 0.3;
+let lightRotAngle = 0;
+let lastTime = performance.now();
+
+function animateBottle(now) {
+  requestAnimationFrame(animateBottle);
+
+  const bottleT = window.bottleT || 0;
+  const captionEl = document.getElementById('bottle-caption');
+  const footerEl = document.getElementById('site-footer');
+
+  if (bottleT <= 0 || !bottleReady) {
+    threeCanvas.style.opacity = '0';
+    if (captionEl) captionEl.style.opacity = '0';
+    if (footerEl) footerEl.style.opacity = '0';
+    return;
+  }
+
+  bottleGroup.visible = true;
+
+  // Fade in: bottleT 0 → 0.3 maps to opacity 0 → 1
+  const fadeAlpha = Math.min(1, bottleT / 0.3);
+  threeCanvas.style.opacity = fadeAlpha;
+  if (captionEl) captionEl.style.opacity = fadeAlpha;
+  if (footerEl) footerEl.style.opacity = fadeAlpha;
+
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+  lightRotAngle += LIGHT_ROT_SPEED * dt;
+
+  // Rotate lights
+  for (let i = 0; i < LIGHT_COUNT; i++) {
+    const { phi, theta, radius } = lightSphCoords[i];
+    const rotatedTheta = theta + lightRotAngle;
+    lights[i].position.set(
+      radius * Math.sin(phi) * Math.cos(rotatedTheta),
+      radius * Math.cos(phi),
+      radius * Math.sin(phi) * Math.sin(rotatedTheta)
+    );
+  }
+
+  // Slow bottle rotation
+  bottleGroup.rotation.y += 0.004;
+  bottleGroup.rotation.z += 0.004;
+
+  // Gravity-aware clip plane: always horizontal, liquid pools at bottom
+  if (voidMeshRef) {
+    bottleGroup.updateMatrixWorld(true);
+    const worldBox = new THREE.Box3().setFromObject(voidMeshRef);
+    const worldFillY = worldBox.min.y + (worldBox.max.y - worldBox.min.y) * 0.6;
+
+    const t = now * 0.001;
+    const sloshX = Math.sin(t * 0.8) * 0.09 + Math.sin(t * 1.9) * 0.03;
+    const sloshZ = Math.cos(t * 1.1) * 0.09 + Math.cos(t * 2.3) * 0.03;
+    liquidClipPlane.normal.set(sloshX, -1, sloshZ).normalize();
+    liquidClipPlane.constant = worldFillY;
+    rippleClipTime.value = t;
+
+    // Position cap plane on the clip plane
+    if (surfaceCap) {
+      liquidClipPlane.coplanarPoint(surfaceCap.position);
+      surfaceCap.lookAt(
+        surfaceCap.position.x - liquidClipPlane.normal.x,
+        surfaceCap.position.y - liquidClipPlane.normal.y,
+        surfaceCap.position.z - liquidClipPlane.normal.z
+      );
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
+requestAnimationFrame(animateBottle);
+</script>
+</body>
+</html>
