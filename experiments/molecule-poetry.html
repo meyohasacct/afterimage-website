@@ -60,7 +60,6 @@
     left: 0; right: 0;
     text-align: center;
     font: 400 clamp(12px, 1.4vw, 18px) Kalice, Georgia, serif;
-    line-height: 0.1;
     color: rgba(200, 200, 200, 0.7);
     letter-spacing: 0.2em;
     pointer-events: none;
@@ -100,33 +99,7 @@
 <div id="loader"><span><span style="animation-delay:0s">L</span><span style="animation-delay:0.08s">O</span><span style="animation-delay:0.16s">A</span><span style="animation-delay:0.24s">D</span><span style="animation-delay:0.32s">I</span><span style="animation-delay:0.4s">N</span><span style="animation-delay:0.48s">G</span></span></div>
 <canvas id="c"></canvas>
 <canvas id="three-canvas"></canvas>
-<div id="bottle-caption"></div>
-<script>
-// Each letter appears on exactly one of the 3 lines; the other 2 get an invisible placeholder
-(() => {
-  const text = 'COMING LATE 2026';
-  // Line assignment for visible letters only (1,2,3 → 0,1,2); spaces show on all lines
-  const letterAssign = [0,1,2,1,2,1,0,2,1,0,1,2,1,0];
-  const lines = [[], [], []];
-  let li = 0;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (ch === ' ') {
-      for (let l = 0; l < 3; l++) lines[l].push(`<span> </span>`);
-    } else {
-      const target = letterAssign[li++];
-      for (let l = 0; l < 3; l++) {
-        if (l === target) {
-          lines[l].push(`<span>${ch}</span>`);
-        } else {
-          lines[l].push(`<span style="visibility:hidden">${ch}</span>`);
-        }
-      }
-    }
-  }
-  document.getElementById('bottle-caption').innerHTML = lines.map(l => l.join('')).join('<br>');
-})();
-</script>
+<div id="bottle-caption">COMING LATE 2026</div>
 <div class="grain"></div>
 <script>
 // Prevent browser from restoring scroll position on reload/back-nav
@@ -497,7 +470,7 @@ function animate(now) {
       const bylineX = W / 2 + bylineSize * 1.5;
       const bylineY = H / 2 + fontSize * 0.75 + textOffsetY;
       ctx.fillText('BY            STUDIO', bylineX, bylineY);
-      ctx.fillText('MEYOHAS', bylineX, bylineY + bylineSize * 1.3);
+      ctx.fillText('MEYOHAS', bylineX, bylineY + bylineSize * 1.15);
     }
   }
 }
