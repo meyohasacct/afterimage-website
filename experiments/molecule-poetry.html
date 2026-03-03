@@ -24,6 +24,7 @@
     html, body { height: 600vh; }
     #bottle-caption { font-size: clamp(14px, 1.7vw, 22px); }
     #loader span { font-size: 17px; }
+    .grain { opacity: 0.04; }
   }
   html.loading, html.loading body { height: 100vh; overflow: hidden; }
   #loader {
@@ -128,6 +129,10 @@
 </script>
 <div class="grain"></div>
 <script>
+// Prevent browser from restoring scroll position on reload/back-nav
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+
 // --- Simplex Noise ---
 const SimplexNoise = (() => {
   const F2 = 0.5 * (Math.sqrt(3) - 1);
