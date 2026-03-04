@@ -53,6 +53,7 @@
     top: 0; left: 0;
     pointer-events: none;
     opacity: 0;
+    filter: brightness(1.25) contrast(1.35);
   }
   #bottle-caption {
     position: fixed;
@@ -505,9 +506,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 // --- Renderer (alpha: true for transparent overlay on 2D canvas) ---
 const threeCanvas = document.getElementById('three-canvas');
@@ -532,24 +530,6 @@ const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerH
 camera.position.set(0, 0, 5);
 camera.lookAt(0, 0, 0);
 
-// --- Post-processing: subtle bloom ---
-const bloomRenderTarget = new THREE.WebGLRenderTarget(
-  window.innerWidth, window.innerHeight,
-  { stencilBuffer: true }
-);
-const composer = new EffectComposer(renderer, bloomRenderTarget);
-const renderPass = new RenderPass(scene, camera);
-renderPass.clearColor = new THREE.Color(0x000000);
-renderPass.clearAlpha = 0;
-composer.addPass(renderPass);
-const bloomPass = new UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.15,  // strength (10% of ~1.5 craziness)
-  0.4,   // radius
-  0.92   // threshold — only bright highlights bloom
-);
-composer.addPass(bloomPass);
-
 // --- Lighting: 10 point lights evenly distributed on a sphere ---
 const LIGHT_COUNT = 10;
 const warmHues = [0, 0.06, 0.12]; // red, orange, yellow
@@ -563,6 +543,7 @@ for (let i = 0; i < LIGHT_COUNT; i++) {
   scene.add(light);
 }
 const lightSphCoords = [];
+const lightBaseIntensity = 96;
 
 // --- Bottle group ---
 const bottleGroup = new THREE.Group();
@@ -625,8 +606,8 @@ function patchRippleClip(material) {
 // --- Materials ---
 const glassMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(0x111111),
-  metalness: 0.0, roughness: 0.05,
-  envMap, envMapIntensity: 2.5,
+  metalness: 0.0, roughness: 0.03,
+  envMap, envMapIntensity: 5.0,
   clearcoat: 1.0, clearcoatRoughness: 0.0,
   ior: 1.5, reflectivity: 1.0,
   transparent: true, opacity: 0.30,
@@ -636,14 +617,12 @@ const glassMaterial = new THREE.MeshPhysicalMaterial({
 const liquidMaterial = new THREE.MeshPhysicalMaterial({
   color: new THREE.Color(0xdaa860),
   metalness: 0.0,
-  roughness: 0.2,
-  envMap,
-  envMapIntensity: 1.5,
-  clearcoat: 1.0,
-  clearcoatRoughness: 0.0,
+  roughness: 0.3,
+  envMapIntensity: 0.0,
+  clearcoat: 0.0,
   ior: 1.33,
   transparent: true,
-  opacity: 0.17,
+  opacity: 0.12,
   side: THREE.DoubleSide,
   clippingPlanes: [liquidClipPlane],
   clipShadows: true,
@@ -790,8 +769,8 @@ function onModelsReady() {
 
   // Warm-up renders
   bottleGroup.visible = true;
-  composer.render();
-  composer.render();
+  renderer.render(scene, camera);
+  renderer.render(scene, camera);
   bottleGroup.visible = false;
 
   bottleReady = true;
@@ -803,7 +782,6 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // --- Animation loop ---
@@ -837,7 +815,8 @@ function animateBottle(now) {
   lastTime = now;
   lightRotAngle += LIGHT_ROT_SPEED * dt;
 
-  // Rotate lights
+  // Rotate lights + shimmer intensity
+  const shimmerTime = now * 0.001;
   for (let i = 0; i < LIGHT_COUNT; i++) {
     const { phi, theta, radius } = lightSphCoords[i];
     const rotatedTheta = theta + lightRotAngle;
@@ -846,6 +825,9 @@ function animateBottle(now) {
       radius * Math.cos(phi),
       radius * Math.sin(phi) * Math.sin(rotatedTheta)
     );
+    // Each light shimmers at its own rate (±50% intensity)
+    const shimmer = 1 + 0.5 * Math.sin(shimmerTime * (1.5 + i * 0.7) + i * 2.3);
+    lights[i].intensity = lightBaseIntensity * shimmer;
   }
 
   // Slow bottle rotation
@@ -876,7 +858,7 @@ function animateBottle(now) {
     }
   }
 
-  composer.render();
+  renderer.render(scene, camera);
 }
 
 requestAnimationFrame(animateBottle);
